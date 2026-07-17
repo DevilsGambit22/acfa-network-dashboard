@@ -182,9 +182,6 @@ scroll-behavior:smooth;
 .tabs.is-dragging{
   cursor:grabbing;
 }
-.tabs.is-dragging .tab{
-  pointer-events:none;
-}
 
 </style>
 </head>
@@ -518,72 +515,68 @@ $('#nextMonth').onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getM
 const tracks=[{t:'The Forgotten Kingdom',f:'assets/music/onecinematicstudio-the-forgotten-kingdom-_-melancholic-amp-grand-ancient-ruins-music-529059.mp3'},{t:'The Last Kingdom',f:'assets/music/megisss-the-last-kingdom-481576.mp3'},{t:"Queen's Shadow",f:'assets/music/Queens Shadow.mp3'}];let ti=0;const audio=$('#audio'),wave=$('#wave');function setTrack(i){ti=(i+tracks.length)%tracks.length;audio.src=tracks[ti].f;$('#trackTitle').textContent=tracks[ti].t;renderPlaylist()}function renderPlaylist(){$('#playlist').innerHTML=tracks.map((x,i)=>`<button class="${i===ti?'active':''}" data-i="${i}">${i+1}. ${x.t}</button>`).join('');$$('#playlist button').forEach(b=>b.onclick=()=>{setTrack(+b.dataset.i);audio.play()})}$('#play').onclick=()=>audio.paused?audio.play():audio.pause();$('#prevTrack').onclick=()=>{setTrack(ti-1);audio.play()};$('#nextTrack').onclick=()=>{setTrack(ti+1);audio.play()};audio.onplay=()=>{wave.classList.add('playing');$('#play').textContent='Pause'};audio.onpause=()=>{wave.classList.remove('playing');$('#play').textContent='Play'};audio.ontimeupdate=()=>{$('#progress').value=audio.duration?audio.currentTime/audio.duration*100:0};$('#progress').oninput=e=>{if(audio.duration)audio.currentTime=audio.duration*e.target.value/100};$('#volume').oninput=e=>audio.volume=e.target.value;audio.onended=()=>{setTrack(ti+1);audio.play()};audio.volume=.7;setTrack(0);
 const c=$('#matrix'),ctx=c.getContext('2d');function size(){c.width=Math.min(innerWidth,390)*devicePixelRatio;c.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}size();addEventListener('resize',size);const chars='ACFA♔♕♖♗♘♙01',font=13;let drops=[];function matrix(){const w=Math.min(innerWidth,390),cols=Math.ceil(w/font);if(drops.length!==cols)drops=Array(cols).fill(1);ctx.fillStyle='rgba(0,0,0,.08)';ctx.fillRect(0,0,w,innerHeight);ctx.fillStyle='#d6aa2d';ctx.font=font+'px monospace';drops.forEach((y,i)=>{ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*font,y*font);if(y*font>innerHeight&&Math.random()>.975)drops[i]=0;drops[i]++});requestAnimationFrame(matrix)}matrix();
 
+
+
+
 // Drag-to-scroll support for the page tab strip
 (function(){
   const tabs = document.querySelector('.tabs');
-  if (!tabs || tabs.dataset.dragScrollReady === 'true') return;
+  if (!tabs) return;
 
-  tabs.dataset.dragScrollReady = 'true';
-
-  let isPointerDown = false;
+  let mouseDown = false;
   let startX = 0;
   let startScrollLeft = 0;
-  let dragged = false;
-  const dragThreshold = 5;
+  let moved = false;
+  let blockNextClick = false;
+  const threshold = 6;
 
-  tabs.addEventListener('pointerdown', function(event){
-    // Keep touch scrolling native; use custom dragging for mouse/pen.
-    if (event.pointerType === 'touch') return;
+  tabs.addEventListener('mousedown', function(event){
     if (event.button !== 0) return;
 
-    isPointerDown = true;
-    dragged = false;
+    mouseDown = true;
+    moved = false;
     startX = event.clientX;
     startScrollLeft = tabs.scrollLeft;
-    tabs.setPointerCapture(event.pointerId);
   });
 
-  tabs.addEventListener('pointermove', function(event){
-    if (!isPointerDown) return;
+  window.addEventListener('mousemove', function(event){
+    if (!mouseDown) return;
 
     const deltaX = event.clientX - startX;
 
-    if (Math.abs(deltaX) >= dragThreshold) {
-      dragged = true;
+    if (Math.abs(deltaX) > threshold) {
+      moved = true;
       tabs.classList.add('is-dragging');
       tabs.scrollLeft = startScrollLeft - deltaX;
       event.preventDefault();
     }
   });
 
-  function endDrag(event){
-    if (!isPointerDown) return;
+  window.addEventListener('mouseup', function(){
+    if (!mouseDown) return;
 
-    isPointerDown = false;
+    mouseDown = false;
     tabs.classList.remove('is-dragging');
 
-    if (tabs.hasPointerCapture && tabs.hasPointerCapture(event.pointerId)) {
-      tabs.releasePointerCapture(event.pointerId);
+    if (moved) {
+      blockNextClick = true;
+      setTimeout(function(){
+        blockNextClick = false;
+      }, 50);
     }
-
-    // Preserve the dragged state through the click event that follows pointerup.
-    setTimeout(function(){
-      dragged = false;
-    }, 0);
-  }
-
-  tabs.addEventListener('pointerup', endDrag);
-  tabs.addEventListener('pointercancel', endDrag);
-  tabs.addEventListener('lostpointercapture', function(){
-    isPointerDown = false;
-    tabs.classList.remove('is-dragging');
   });
 
   tabs.addEventListener('click', function(event){
-    if (!dragged) return;
+    if (!blockNextClick) return;
+
     event.preventDefault();
-    event.stopPropagation();
+    event.stopImmediatePropagation();
+    blockNextClick = false;
   }, true);
+
+  tabs.addEventListener('dragstart', function(event){
+    event.preventDefault();
+  });
 })();
 
 </script>
