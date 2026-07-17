@@ -226,7 +226,105 @@ function boot(){ $('#init').classList.add('hidden'); $('#app').classList.add('ac
 $('#initialize').onclick=boot; $('#initializeText').onclick=boot;
 if(localStorage.getItem('acfaInitialized')==='1') boot();
 $$('.tab').forEach(b=>b.onclick=()=>{$$('.tab').forEach(x=>x.classList.remove('active'));$$('.page').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.page).classList.add('active')});
-function tick(){const d=new Date(),h=d.getHours();$('#clock').textContent=d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});$('#zone').textContent=Intl.DateTimeFormat().resolvedOptions().timeZone||'Local time';let g='Good Evening, ACFA',s='The clocks are ticking and the next move is waiting.';if(h<5){g='Late Night Chess';s='Quiet hours. Sharp moves.'}else if(h<12){g='Good Morning, ACFA';s='The board is open and the first move is waiting.'}else if(h<18){g='Good Afternoon, ACFA';s='A good time for a game—and to keep the queen protected.'}$('#greeting').textContent=g;$('#greetingLine').textContent=s;$('#greetingSub').textContent=d.toLocaleDateString([], {weekday:'long',month:'long',day:'numeric',year:'numeric'})}setInterval(tick,1000);tick();
+
+const ACFA_QUOTES={
+  morning:[
+    "♔ A new day. A new board. Every move matters.",
+    "♔ Every master was once a beginner. Welcome back.",
+    "♔ Begin with confidence. Finish with purpose.",
+    "♔ Every great game starts with the first move.",
+    "♔ The board is ready. Make today count.",
+    "♔ Chess rewards preparation. So does life.",
+    "♔ Good morning, ACFA. Let's build something great today.",
+    "♔ Protect the king. Control the center. Enjoy the journey.",
+    "♔ Every player belongs. Every move matters.",
+    "♔ Today is another chance to improve one move at a time."
+  ],
+  afternoon:[
+    "♔ A good time for a game—and to protect the king.",
+    "♔ Take your time. The best move is worth finding.",
+    "♔ Strong positions come from patient decisions.",
+    "♔ Every move tells a story.",
+    "♔ Great games are built, not rushed.",
+    "♔ The middlegame is where plans become victories.",
+    "♔ Your next move could change everything.",
+    "♔ ACFA is stronger because you're here.",
+    "♔ One good move is better than ten quick ones.",
+    "♔ Keep thinking ahead."
+  ],
+  evening:[
+    "♔ End the day with a great game.",
+    "♔ Every challenge is another lesson.",
+    "♔ Study today. Improve tomorrow.",
+    "♔ The board still has stories to tell.",
+    "♔ Finish strong. The king is counting on you.",
+    "♔ Great players never stop learning.",
+    "♔ Victory begins with one accurate move.",
+    "♔ Another game. Another opportunity.",
+    "♔ Chess is a conversation without words.",
+    "♔ Thanks for being part of ACFA."
+  ],
+  night:[
+    "♔ Even at night, the board never sleeps.",
+    "♔ Quiet minds often find the strongest moves.",
+    "♔ Every endgame begins with preparation.",
+    "♔ Rest today. Return stronger tomorrow.",
+    "♔ Every move matters, no matter the hour.",
+    "♔ Champions are built one game at a time.",
+    "♔ The king still needs protecting.",
+    "♔ The next brilliant move may be your own.",
+    "♔ Thanks for spending part of your day with ACFA.",
+    "♔ Until the next game... good night."
+  ]
+};
+
+function localDayOfYear(date){
+  const start=new Date(date.getFullYear(),0,0);
+  return Math.floor((date-start)/86400000);
+}
+
+function tick(){
+  const d=new Date();
+  const h=d.getHours();
+
+  $('#clock').textContent=d.toLocaleTimeString([],{
+    hour:'numeric',
+    minute:'2-digit'
+  });
+
+  $('#zone').textContent=
+    Intl.DateTimeFormat().resolvedOptions().timeZone||'Local time';
+
+  let period='night';
+  let greeting='Good Night, ACFA';
+
+  if(h>=5&&h<12){
+    period='morning';
+    greeting='Good Morning, ACFA';
+  }else if(h>=12&&h<17){
+    period='afternoon';
+    greeting='Good Afternoon, ACFA';
+  }else if(h>=17&&h<21){
+    period='evening';
+    greeting='Good Evening, ACFA';
+  }
+
+  const quotes=ACFA_QUOTES[period];
+  const quote=quotes[localDayOfYear(d)%quotes.length];
+
+  $('#greeting').textContent=greeting;
+  $('#greetingLine').textContent=quote;
+  $('#greetingSub').textContent=d.toLocaleDateString([],{
+    weekday:'long',
+    month:'long',
+    day:'numeric',
+    year:'numeric'
+  });
+}
+
+setInterval(tick,1000);
+tick();
+
 async function json(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error(r.status);return r.json()}
 function flatten(d){const m=new Map;['weekly','monthly','all_time'].forEach(k=>(d[k]||[]).forEach(x=>m.set(x.username.toLowerCase(),x)));return [...m.values()]}
 let members=[],matches=[],calDate=new Date(new Date().getFullYear(),new Date().getMonth(),1);
