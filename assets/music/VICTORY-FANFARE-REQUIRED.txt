@@ -1,5 +1,0 @@
-Add your victory fanfare here with this exact filename:
-
-victory-fanfare.mp3
-
-The dashboard will pause ACFA Radio, play the fanfare, and resume the prior track automatically.
